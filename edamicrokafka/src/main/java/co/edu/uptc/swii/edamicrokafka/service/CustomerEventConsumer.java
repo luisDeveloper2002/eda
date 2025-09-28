@@ -6,6 +6,8 @@ import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 
 import co.edu.uptc.swii.edamicrokafka.model.Customer;
+import co.edu.uptc.swii.edamicrokafka.model.CustomerWithPassword;
+import co.edu.uptc.swii.edamicrokafka.model.Login;
 import co.edu.uptc.swii.edamicrokafka.utils.JsonUtils;
 
 
@@ -15,12 +17,19 @@ public class CustomerEventConsumer {
 
     @Autowired
     private CustomerService customerService;
+   @Autowired
+    private LoginService loginService;
 
     @KafkaListener(topics = "addcustomer_events", groupId = "customer_group")
-    public void handleAddOrderEvent(String customer) {
+    public void handleAddOrderEvent(String customerData) {
         JsonUtils jsonUtils = new JsonUtils();
-        Customer receiveAddCustomer = jsonUtils.fromJson(customer, Customer.class);
-        customerService.save(receiveAddCustomer);
+         CustomerWithPassword customerWithPass = jsonUtils.fromJson(customerData, CustomerWithPassword.class);
+        Customer customer = customerWithPass.getCustomer();
+        customerService.save(customer);
+         Login login = new Login();
+        login.setCustomerId(customer.getDocument());
+        login.setPassword(customerWithPass.getPassword());
+        loginService.save(login);
     }
 
     @KafkaListener(topics = "editcustomer_events", groupId = "customer_group")
@@ -41,4 +50,12 @@ public class CustomerEventConsumer {
         List<Customer> customersReceived = customerService.findAll();
         return customersReceived;
     }
+    @KafkaListener(topics = "deletecustomer_events", groupId = "customer_group")
+public void handleDeleteCustomerEvent(String document) {
+    Customer customer = customerService.findById(document);
+    if (customer != null) {
+        customerService.delete(customer);
+    }
+}
+
 }

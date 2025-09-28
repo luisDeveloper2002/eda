@@ -2,6 +2,9 @@ package co.edu.uptc.swii.edamicrokafka.service;
 
 
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
@@ -16,13 +19,16 @@ public class CustomerEventProducer {
     private static final String TOPIC_EDIT = "editcustomer_events";
     private static final String TOPIC_FINDBYID = "findcustomerbyid_events";
     private static final String TOPIC_FINDALLCUSTOMERS = "findallcustomers_events";
-
+    private static final String TOPIC_DELETE = "deletecustomer_events";
     @Autowired
     private KafkaTemplate<String, String> kafkaTemplateAdd;
-    public void sendAddCustomerEvent(Customer customer){
-        String json = null;
+    public void sendAddCustomerEvent(Customer customer, String password){
+       String json = null;
         JsonUtils jsonUtils = new JsonUtils();
-        json = jsonUtils.toJson(customer);
+        Map<String, Object> customerData = new HashMap<>();
+        customerData.put("customer", customer);
+        customerData.put("password", password);
+        json = jsonUtils.toJson(customerData);
         kafkaTemplateAdd.send(TOPIC_ADD, json);
     }
 
@@ -43,7 +49,12 @@ public class CustomerEventProducer {
 
     @Autowired
     private KafkaTemplate<String, String> kafkaTemplateFindAllorders;
-    public void sendFindAllordersEvent(String customers){
-        kafkaTemplateFindAllorders.send(TOPIC_FINDALLCUSTOMERS, customers);
+    public void sendFindAllordersEvent(){
+        kafkaTemplateFindAllorders.send(TOPIC_FINDALLCUSTOMERS, "FIND_ALL");
     }
+    @Autowired
+private KafkaTemplate<String, String> kafkaTemplateDelete;
+public void sendDeleteCustomerEvent(String document) {
+    kafkaTemplateDelete.send(TOPIC_DELETE, document);
+}
 }
