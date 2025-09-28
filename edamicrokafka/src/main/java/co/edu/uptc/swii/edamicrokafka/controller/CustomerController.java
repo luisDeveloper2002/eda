@@ -49,7 +49,7 @@ public String findCustomerById(@PathVariable String document) {
 
 @GetMapping("/customers")
 public String findAllCustomers() {
-    customerEventProducer.sendFindAllordersEvent();
+    customerEventProducer.sendFindAllCustomersEvent();
     return "Find all customers request sent";
 }
 }

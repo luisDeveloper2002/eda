@@ -10,51 +10,47 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
 import co.edu.uptc.swii.edamicrokafka.model.Customer;
+import co.edu.uptc.swii.edamicrokafka.model.CustomerEvent;
+import co.edu.uptc.swii.edamicrokafka.model.CustomerEventType;
 import co.edu.uptc.swii.edamicrokafka.utils.JsonUtils;
 
 
 @Service
 public class CustomerEventProducer {
-    private static final String TOPIC_ADD = "addcustomer_events";
-    private static final String TOPIC_EDIT = "editcustomer_events";
-    private static final String TOPIC_FINDBYID = "findcustomerbyid_events";
-    private static final String TOPIC_FINDALLCUSTOMERS = "findallcustomers_events";
-    private static final String TOPIC_DELETE = "deletecustomer_events";
+    private static final String TOPIC = "customer_events";
+    
     @Autowired
-    private KafkaTemplate<String, String> kafkaTemplateAdd;
-    public void sendAddCustomerEvent(Customer customer, String password){
-       String json = null;
-        JsonUtils jsonUtils = new JsonUtils();
+    private KafkaTemplate<String, String> kafkaTemplate;
+    private JsonUtils jsonUtils = new JsonUtils();
+
+    private void sendCustomerEvent(CustomerEventType eventType, String data) {
+        CustomerEvent event = new CustomerEvent();
+        event.setEventType(eventType);
+        event.setData(data);
+        kafkaTemplate.send(TOPIC, jsonUtils.toJson(event));
+    }
+
+    public void sendAddCustomerEvent(Customer customer, String password) {
         Map<String, Object> customerData = new HashMap<>();
         customerData.put("customer", customer);
         customerData.put("password", password);
-        json = jsonUtils.toJson(customerData);
-        kafkaTemplateAdd.send(TOPIC_ADD, json);
+        sendCustomerEvent(CustomerEventType.ADD_CUSTOMER, jsonUtils.toJson(customerData));
     }
 
-    @Autowired
-    private KafkaTemplate<String, String> kafkaTemplateEdit;
-    public void sendEditCustomerEvent(Customer customer){
-        String json = null;
-        JsonUtils jsonUtils = new JsonUtils();
-        json = jsonUtils.toJson(customer);
-        kafkaTemplateEdit.send(TOPIC_EDIT, json);
+    public void sendEditCustomerEvent(Customer customer) {
+        sendCustomerEvent(CustomerEventType.EDIT_CUSTOMER, jsonUtils.toJson(customer));
     }
 
-    @Autowired
-    private KafkaTemplate<String, String> kafkaTemplateFindById;
-    public void sendFindByCustomerIDEvent(String document){
-        kafkaTemplateFindById.send(TOPIC_FINDBYID, document);
+    public void sendDeleteCustomerEvent(String document) {
+        sendCustomerEvent(CustomerEventType.DELETE_CUSTOMER, document);
     }
 
-    @Autowired
-    private KafkaTemplate<String, String> kafkaTemplateFindAllorders;
-    public void sendFindAllordersEvent(){
-        kafkaTemplateFindAllorders.send(TOPIC_FINDALLCUSTOMERS, "FIND_ALL");
+    public void sendFindByCustomerIDEvent(String document) {
+        sendCustomerEvent(CustomerEventType.FIND_CUSTOMER_BY_ID, document);
     }
-    @Autowired
-private KafkaTemplate<String, String> kafkaTemplateDelete;
-public void sendDeleteCustomerEvent(String document) {
-    kafkaTemplateDelete.send(TOPIC_DELETE, document);
+
+    public void sendFindAllCustomersEvent() {
+        sendCustomerEvent(CustomerEventType.FIND_ALL_CUSTOMERS, "");
+    }
 }
-}
+
