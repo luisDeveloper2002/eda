@@ -1,0 +1,27 @@
+server:
+  port: 8088
+
+spring:
+  application:
+    name: gateway-zuul
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,routes
+
+zuul:
+  prefix: /api
+  strip-prefix: true
+
+  routes:
+    customer:
+      path: /customer/**
+      url: http://localhost:8080
+    order:
+      path: /order/**
+      url: http://localhost:8080
+    login:
+      path: /login/**
+      url: http://localhost:8080
